@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Offers Companion - LTP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script src="resources.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+<style>
+  :root{
+    --ink:#12173A; --muted:#8B8F9B; --line:#E8E9EB; --bg:#F4F7F9;
+    --orange:#F26900; --orange-dark:#D95E00; --orange-soft:#FEF0E5; --orange-tint:#FEF7F1;
+    --green:#00AB8E; --green-soft:#E6F7F3; --green-dark:#007A66; --blue:#19155E;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;min-height:100%}
+  body{font-family:'Open Sans',Arial,sans-serif;color:var(--ink);background:var(--bg);-webkit-font-smoothing:antialiased}
+  a{color:var(--orange);text-decoration:none} a:hover{color:var(--orange-dark)}
+  input:focus,textarea:focus{outline:2px solid var(--orange);outline-offset:-1px}
+  button{font-family:inherit}
+  h1,h2,p{margin:0}
+
+  .shell{display:flex;justify-content:center;min-height:100vh}
+  .phone{width:100%;max-width:430px;background:#fff;min-height:100vh;display:flex;flex-direction:column}
+  .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .page{padding:24px 20px 32px;display:flex;flex-direction:column;gap:16px}
+
+  .eyebrow{font-size:11px;font-weight:800;letter-spacing:1.2px;color:var(--orange);text-transform:uppercase}
+  .title{font-size:20px;font-weight:800;margin:6px 0 4px}
+  .sub{font-size:13px;color:var(--muted);line-height:1.5}
+  .small-label{font-size:10px;font-weight:800;letter-spacing:1px;color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+
+  .wordmark{font-weight:800;font-size:18px;letter-spacing:-0.5px;color:var(--ink)}
+  .wordmark span{color:var(--orange)}
+  .logo-img{height:22px;width:auto;max-width:120px;display:block;object-fit:contain}
+  .welcome-logo .logo-img{height:34px;max-width:180px}
+
+  .btn{height:44px;background:var(--orange);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;width:100%}
+  .btn:disabled{opacity:.4;cursor:default}
+  .btn-ghost{height:40px;border:1px solid var(--orange);background:#fff;color:var(--orange);border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;width:100%}
+  .link-btn{background:none;border:none;padding:0;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer;text-align:left}
+  .link-btn.orange{color:var(--orange)}
+  .input{height:40px;border:1px solid var(--line);border-radius:8px;padding:0 12px;font-size:14px;font-family:inherit;color:var(--ink);width:100%}
+  textarea.input{height:auto;padding:12px;resize:none}
+  label.lbl{font-size:12px;font-weight:700;display:block;margin-bottom:6px}
+
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:14px 20px;border-bottom:1px solid var(--line);background:#fff;position:sticky;top:0;z-index:5}
+  .avatar{width:28px;height:28px;border-radius:100px;background:var(--ink);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+  .who{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:600}
+
+  .steps{background:var(--bg);border-radius:20px;padding:12px;display:flex;flex-direction:column;gap:8px}
+  .step{display:flex;align-items:center;gap:12px;background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;cursor:pointer}
+  .step.locked{cursor:default;opacity:.55}
+  .dot{width:28px;height:28px;border-radius:100px;background:var(--ink);color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .step.locked .dot{background:var(--line);color:var(--muted)}
+  .step-title{font-size:14px;font-weight:700}
+  .step-desc{font-size:11px;color:var(--muted);margin-top:2px}
+  .chip{font-size:10px;font-weight:800;letter-spacing:.4px;text-transform:uppercase;color:var(--ink);background:var(--bg);border-radius:100px;padding:4px 10px;white-space:nowrap}
+  .step.locked .chip{color:var(--muted)}
+
+  .card{border:1px solid var(--line);border-radius:12px;padding:18px 20px;background:#fff}
+  .card.click{cursor:pointer;display:flex;align-items:center;gap:12px;padding:16px 20px}
+  .card-title{font-size:15px;font-weight:800}
+  .card-title.sm{font-size:13px;font-weight:700}
+
+  .choice{border:1px solid var(--line);background:#fff;border-radius:12px;padding:16px;cursor:pointer}
+  .choice b{font-size:14px;font-weight:700;display:block}
+  .choice span{font-size:11px;color:var(--muted);margin-top:2px;display:block}
+
+  .group-h{font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+  .topic{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:#fff;border-radius:8px;padding:11px 14px;cursor:pointer;font-size:13px;font-weight:600}
+  .topic.on{border-color:var(--orange);background:var(--orange-tint)}
+  .check{width:18px;height:18px;border-radius:5px;border:2px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+  .topic.on .check{border-color:var(--orange);background:var(--orange)}
+
+  .res{display:flex;align-items:center;gap:10px;border:1px solid var(--line);border-radius:8px;padding:10px 12px;background:#fff;color:var(--ink)}
+  .res .tag{font-size:9px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;background:var(--bg);color:var(--ink);border-radius:4px;padding:3px 7px;flex-shrink:0;min-width:56px;text-align:center}
+  .res .tag.fill{color:#fff}
+  .res .t{flex:1;font-size:12px;font-weight:600;line-height:1.4}
+  .res svg{width:14px;height:14px;flex-shrink:0}
+  .offer-sec{border:1px solid var(--line);border-left:6px solid var(--o);border-radius:12px;background:#fff;overflow:hidden}
+  .offer-head{background:var(--o);color:#fff;padding:12px 16px}
+  .offer-head .oh-k{font-size:10px;font-weight:800;letter-spacing:1px;text-transform:uppercase;opacity:.85}
+  .offer-head .oh-t{font-size:16px;font-weight:800;margin-top:2px}
+  .offer-body{padding:14px 16px 16px;display:flex;flex-direction:column;gap:14px}
+  .sub-block .sb-t{font-size:13px;font-weight:800;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+  .sub-block .sb-t i{width:8px;height:8px;border-radius:100px;background:var(--o);display:inline-block}
+  .res .tag.o{background:var(--o);color:#fff}
+  .protip{background:var(--ink);color:#fff;border-radius:12px;padding:16px 18px}
+  .protip .card-title{color:#fff}
+  .protip p{font-size:12px;line-height:1.55;color:#C9CBD6;margin-top:4px}
+  .protip a{color:#F7A566;font-weight:700;word-break:break-all}
+
+  .hero{background:var(--ink);border-radius:20px;padding:28px 24px;color:#fff}
+  .hero .eyebrow{color:#F7A566}
+  .hero h2{font-size:22px;font-weight:800;margin:8px 0;color:#fff}
+  .hero p{font-size:13px;line-height:1.55;color:#B9BCC9}
+
+  .qmeta{display:flex;justify-content:space-between;font-size:11px;font-weight:700;color:var(--muted);margin-bottom:8px}
+  .bar{height:6px;background:var(--bg);border-radius:100px;overflow:hidden}
+  .bar i{display:block;height:100%;background:var(--orange);border-radius:100px;transition:width .3s}
+  .qtext{font-size:18px;font-weight:800;line-height:1.35;margin-top:4px}
+  .opt{padding:14px 16px;border:1px solid var(--line);background:#fff;border-radius:8px;font-size:13px;font-weight:600;line-height:1.4;cursor:pointer}
+  .opt.picked{border-color:var(--ink);background:var(--bg)}
+  .opt.right{border-color:var(--green);background:var(--green-soft);color:var(--green-dark)}
+  .opt.wrong{border-color:var(--orange);background:var(--orange-soft);color:#C25400}
+  .opt.done{cursor:default}
+  .why{font-size:12px;line-height:1.5;color:var(--muted);border-left:3px solid var(--line);padding-left:10px}
+
+  .scorebox{background:var(--bg);border-radius:20px;padding:24px;text-align:center}
+  .scorebox .big{font-size:44px;font-weight:800;margin:4px 0}
+  .scorebox .big small{font-size:20px;color:var(--muted);font-weight:700}
+  .lb{border:1px solid var(--line);border-radius:12px;padding:16px 16px 8px}
+  .lb-h{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px}
+  .lb-h b{font-size:14px;font-weight:800}
+  .lb-h span{font-size:11px;color:var(--muted);font-weight:600}
+  .row{display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:8px;margin-bottom:4px}
+  .row.me{background:var(--orange-soft)}
+  .row .rk{width:24px;font-size:12px;font-weight:700;color:var(--muted)}
+  .row .nm{flex:1;font-size:13px;font-weight:600}
+  .row.me .nm{font-weight:800}
+  .row .pt{font-size:13px;font-weight:800}
+  .row.me .pt{color:var(--orange)}
+  .live{display:inline-flex;align-items:center;gap:5px}
+  .live i{width:7px;height:7px;border-radius:100px;background:var(--green);display:inline-block}
+  .live.off i{background:var(--muted)}
+
+  .qa{border:1px solid var(--line);background:#fff;border-radius:12px;padding:12px 14px}
+  .qa.mine{border-color:var(--orange);background:var(--orange-tint)}
+  .qa .qt{font-size:13px;line-height:1.5}
+  .qa .qm{font-size:11px;color:var(--muted);margin-top:6px;font-weight:600}
+
+  .nav{display:flex;border-top:1px solid var(--line);background:#fff;position:sticky;bottom:0}
+  .nav div{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 0 14px;font-size:10px;font-weight:700;cursor:pointer;color:var(--muted)}
+  .nav div.on{color:var(--orange)}
+  .nav svg{width:20px;height:20px}
+  .toast{position:fixed;left:50%;bottom:80px;transform:translateX(-50%);background:var(--ink);color:#fff;font-size:12px;font-weight:600;padding:10px 14px;border-radius:100px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+  .toast.show{opacity:1}
+  .list{display:flex;flex-direction:column;gap:8px}
+  .list.g12{gap:12px}
+  .list.g16{gap:16px}
+  .list.g6{gap:6px}
+  .bullets{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+  .bullet{display:flex;gap:10px;font-size:13px;line-height:1.5}
+  .bullet i{width:5px;height:5px;border-radius:100px;background:var(--orange);margin-top:7px;flex-shrink:0}
+
+  /* Host / projector view */
+  .host{max-width:none;background:var(--bg);padding:32px clamp(16px,4vw,64px)}
+  .host-grid{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start;max-width:900px;margin:0 auto}
+  .host .panel{background:#fff;border:1px solid var(--line);border-radius:20px;padding:24px 28px}
+  .host .row{padding:12px 14px}
+  .host .row .nm{font-size:18px}
+  .host .row .pt{font-size:20px}
+  .host .row .rk{font-size:15px;width:36px}
+  .host .row.top1{background:var(--orange-soft)}
+  .host h1{font-size:28px;font-weight:800}
+  .host .stat{font-size:13px;color:var(--muted);font-weight:600}
+  .host-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .host .btn-ghost{width:auto;padding:0 16px}
+  @media (max-width:800px){.host-grid{grid-template-columns:1fr}}
+
+  @media print{
+    body{background:#fff}
+    .noprint{display:none !important}
+    .phone{max-width:none;min-height:0}
+    .scroll{overflow:visible}
+    .res .t::after{content:" - " attr(data-url);font-weight:400;color:#555;font-size:10px;word-break:break-all}
+    .protip{background:#fff;color:#000;border:1px solid #000}
+    .protip .card-title,.protip p{color:#000}
+    .protip a{color:#000}
+  }
+</style>
+</head>
+<body>
+<div id="app" class="shell"></div>
+<div id="toast" class="toast"></div>
+
+<script>
+/* ======================= CONFIG ======================= */
+const SUPABASE_URL = 'https://unwonnznqwiczxkjddns.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_4HxFubTlYmb_UhDxzEkrAQ_IuJr53s_';
+const LOGO_SRC = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAlgAAADcCAYAAACs2N87AAAbWElEQVR42u3de5zddX3n8ffn+/39zpmTkGQCCbkYkgwXCeVaUdeHrlbbqlirfVQNtRBuusJKEkKSiaLUstZH8SHbta3FKuDWrrWrrl237mNZ8UJFXQoVsFEuglwKuU0gl0nmfs75/b6f/WMSGi0gSeZyzszr+Xjk8YDJZM6Z7/zmnNfv+/1dbNGcS54UxoQpmFt5b8++L7xzunzPi467ZIVKv1VukS1Aqpem3z5xb/Pm1/84b6bAgGDCBDNzT1v6980+b9EXfzI4no+1f3XXJ2bm9u7hwp2Rnxrc3WTmwTWczJsmG5C03917JdsVzLe72fYYfGvw0DPg4el5f/FYHyP3/DKZLWMYxuwlTu7ljun0HRdlWc0UumTBJF5rZUFFkgczi8ZwYAJfzINUL83D7GLctzwznx/NlrKNT6XXLjv4EqaoIHv2wyaT5DIll5qFUrDUX3Hf27+ma6vcH1UID8j1k2DhZ7fufKzn/K+qZECljDfFMd0HkKQ0rX4nFVxSKTnb0oFtoF4GK5OUnBHBBP4uuiSfmNcfd6XkUskGPkXfxp7/BxtMwczm5MHmRFNXMHudSWokV5nKfW9dsPzxwTV2X6F0l5n/cFZ9/qN2833NaRpYAMZSkYywAjBl+8tdSu4qfm5nWwqmzhjCudF0bkXx8pHCR4Yqex8eWNv1vcztm3Uf+eGcT+/YQ2ABOPxZBEkjpVI5OuHOAgqAaRNepUvlIdOawdSRBTsnM53TTFoXU3Xb4NrldyjZ3xeq3zHVY4vAAsYysMw1XORlkWLIQ4pMZQGYrpJLjdLVOLDzGYMtyYOtKoNWeapuHVrb9X8tpS93NOfdORWXETnNCRjLwJI02IyxXoTAQiEAjHJJRXINF65G6YpmJ1SjXZFC+O5wdc8/9q9evm5w9QmLCSwAzx1YJg0VwUbKwPogADyPIrmGCpe7FEN4eS0Pf2Yhu29obdef9V914hkEFoCfDyy5hovg/c0sBQoLAF6Qa3QZcbhwybSwGm1dcL97+KquLwyu6XolgQVgNLBMGilj2DeSmRlLhADwYpVJGipckmbmwS6S6QeDa7u+tO/9J51LYAHTPbAkNUvzp4erXMcdAI5Aco3OaEmVarR3V2L6wdDarpv3XXnSyQQWMJ33wtxs+0DVjCVCADjq0HJTrRrtfZWY7h66avlHetct6ySwgGnJtWVgBucQAsAYhdaBpcPjqiH8UaUMd/atOfEdBBYwzQSTnuzvUFGaM4kFAGOjPBBaWbRfyYP+58Cari8Nr1naRWAB00Q01/aBDhtoZmKZEADGVqN0lclVy+zdbvHOgdXLLiOwgGkgmPTMcMV2jVQ8cCYhAIw51+hslpktyrP4V4Nrur60+4olLyGwgCkdWK6+RrQn+2qKBBYAjJsiuZqlqyOzd9eq+fcGVi9/M4EFTOlf+qCH9h7jXGwUAMbXwdmszOykEOx/961Z/pHv/trk32uZwALGgZnrgT2zVDonEwLARGiMvuBWZmThj15xVtdXdr63awGBBUwxmbl+um+m7a/nYhYLACbGwWtn1TJ7x+wZ/q2BNcvPJrCAKeTgmYRP9dec47AAYGINNV15DGcFs2/tX3PiWwksYIowkwaLYJt3z/YYCCwAmGgjhSuYHV8x/2rfmq73EljAFHLXzk5L9BUATIpmcrlUy003D6xZ/gECC5gCsuDavGu27R2pJK6HBQCTo3QpSaESwyf613Z9jMAC2lw017bBqj20d5ZnLBMCwKRJLjWSqxbtD/rXdt0gadxPPyKwgHFikhql6Y7txypyJiEATCp3aaR0dUTb1Lem6wYf58gisIBxlAXX93bMtb5G5sYyIQBMemTVS1cts+6BNcvHdbmQwALGObAe3TfDHtozy3OWCQGgZSKrGsO1fauXf5DAAtqQSRougt22dR7LhADQQpHVTK482PXjdQkHAgsYZ3lwfWfrcdo7kjtnEwJAa0guuRRy01/sv/LE3yKwgDaTBdfj+2eEf3q6k2VCAGghpUtmVsuD/3XvlcvOIbCANlO49L+eWMCdnwGgxTSTK482Pw/2xf6rxu4G0QQWMAEqwfW97XPt8f0zE9fEAoDWMlK6alk4XUk3+eXn5gQW0CaCufaMVOzrTyzwPCQGBABazFDhqmX2O3357msJLKCN5CHpa08sCLuGqxzsDgAtqF668hg+vH/NsrcQWECbGD3YvWa3PTU/VSOBBQCtJrkUZXm08JnBK5a8hMAC2oSZ9DePvMT6GxmzWADQgg7cs3BZEbM/9+uOvJMILGACVULSj3cfE27bMt+ZxQKA1jRcuGp5eGf/nq7LCCygXZjrcw8t0egsFsMBAK3GNXqNrCD/eO+apV0EFtAGKsG1edes8I2n5ns1ckYhALSiIrlqWZgfFP6zuw57d5jAAiaBmeszDyxVb53b5wBAqxouXNVg7+y/quudBBbQBvLgemDvzPCVRxdxRiEAtCiXZDKZ+/X73r90LoEFtIHMXDc9eIJt7a9xdXcAaFGN5JqRhVNiiOsJLKAdAiu4tvZ3hBvvX6bMnMICgBZVL13B/KqRK048hcAC2kA1lvryowvtrp1zOeAdAFpU6VJHFuaMZP4HBBbQBoJJw0Wwj993kgYLLj4KAK1qpHRVTL83uPrElxNYQBuoxqS7d84Jn39oCbNYANCikkuVzKrJ0jUEFtAm8ph04/1LbfOuOalCZAFASxopXNHsbYNrul5JYAFtIJprXz2z6354ioaaLBUCQCtySZVolSR1E1hAm6jGpDt7OsOn71/uFa6NBQAtqV66zPS2ve/vOovAAtomskr95f1L7Dtb56eOjKVCAGg1yaVatI48+vsJLKBNBJMayezDd59iT/bVPOcCpADQcuqly6SVg6tPXUxgAW0iD64n+zrsQ3ed6vUycDwWALSY0qVaFo4rVL+AwALaSEdM+s7W48INPzop5cHdGBIAaCmFSyZd5GtPrhJYQDtFVlbqpgeXhC88vMQ5HgsAWkuzdGXBzhzw8rUEFtBGTFIwt4/ec7J9a8v8VMtKBgUAWoRLqkYzuS4ksIA2E801XJht+H8r7L5nOlMHFyEFgJZRTy6X/5ZveOk8AgtoM3lw7RrO7crvnW4/23dM4nY6ANAayiR1ZOH4gUbxRgILaEOVmPQvfR12xR2na2t/jdvpAECLCCZJ6R0EFtCmqjHpwT0zw+V3nGE7BjqcyAKAydcoXe56Xd/ak+cTWECb6siSfrRrlr3vu2dqx2DNWS4EgMlVulTNwvHy5msILKCdIysm3bdrlr3n9jP1ZN8MjskCgEmWmWQeziOwgCkQWZt3H2OX3H6mfto7i/sWAsAkaiYpyV936EVHCSygjSPrkd6Z4eJvn2X/tHNuqhFZADApSncF08kDKb2UwAKmgGpM2jZYsUtuP9O+/sTCVMuSuK0OAEysNHpvwtwtvZrAAqaISnD11aOt+f6KcONPlpcxuEduEA0Ak8BeQ2ABU0gWXMmlj91zYtz0j6f5YDPjMg4AMIEKlyR/2QMrf6VCYAFTSDApj0lffHhRWPXts/3hvbNSLStZMgSACVAml2RdS+YNLCGwgCnGJNWyUvc8Mzv83jfPtv/x6OKURxdLhgAwvpJLlWgzMstWEFjAFFWNSXtGclv3gxVh050rUm+94twoGgDGV26SYjqTwAKmsCy4YnB94eHFYeVtv6p/2DYvVWPiAHgAGCcuSUlnEFjAFHdwyfBn+2p26e1n2LV3nZr2jFScY7MAYOyVLrnsZL9OgcACpoE8uNxltzz0kvi733iZ/u6xxclMnGkIAGMoucvlS9S3pJPAAqYJM6mWJT3Z12Frvn9aeM/tZ/nmXXNSR0zKAsuGAHD0gSXJ7Nj+IizMGA5gesmDy+X61tZjw1075/i7Tn46XXH6Fp00ZzA0U1CRWDwEgCPhLplUKxWWMIMFTEOm0XsZ1kuzv3pocfidW8+1P773lLRjoCPVMma0AOCIAktSHswytxMILGAaCweWDffWM/vTzcvC2249166/9+S0rb+WOmJSHjhGCwAOawfWpCRnBguAFM1Vy0rtHsntk5uXhd++9WX24btPTQ/tnZ3y4N4RkwKXdwCAXx5Ykky2mGOwAPyb0Oqt53bLg0vsK48u9Nct7vV3n7IzvWphb+isNq1IUpGCyC0A+LdGXxt9PoEF4HlDq16a3frUPPvmlnn+0s5Bf+vyXektS3fbKXMHrBZLKw4cFE9sAcCBwHLJZHMJLADPK9jowfCS7JF9M+zBHy3XZx84wc+Z15/etHS3fm3xXuuaPWS1rLTSTUUyJecsRADTOLAkJdccAgvAi5IHVx5cjdLszp7O+P0dneqsFn76sYP+2sW96dULe+3UzgF1djQtmluZTIWb3JnhAjC9EsvMZxJYAA6LmXTwCvDDRbC7d86xO3s61ZEt8yXHjPjZx/WnVxy/X2fN67fls4bVWW1YJbq5S0lSmUwuk7sILwBTL69ckqxKYOEoOz2ZFDJxZ7sXNVpTTTgktlyyp/o67PH9NX3tiePVEZMvmNHwE2cP+4q5g2lF54C6Zg/bopkjmlttqpaVlgVXMDcdElz/Gl6HzHz585Qe292zsmAqyhQnKLJDCKaM89Bf/O/9oRvzgf+2Q/7C2duYMqIkcxeBhaPbkII1vLQtUsqYj3jetyOXNNdMM6b0dykpC67s4BuGZDsGq7alv0P/sG2uzKRqdJ9dKTSvo5kWzKhr0Yy6L5zR9ONrwza3WtrcWrOYEZt5R3SrZqmM5l6NSc+1yDin0uzNY2oSWYe+kduOVMt8Ah5qb1F4TzORBT+3w+GeojwFeYpSaQeyqZRiqRBHFKsjlnU0ZXlDWWyYhULBzOR5HiQzNuYpsuNZumUEFo7Kzr0jP1s6Jz+HkXhhTeWfNcvOdy+mT1Zq9GzEGP3QBLD99Uy9I1l8uHfGszNWB1+UYvA8mltmUhaSmZlyS8/ZUKceO3jh37zhvnvZukbVSymVWVr46Z8MjfdjzWrW/3D/SLxelel7yf85FXP1P1WqX4X6lXSawn127sybtWzeT23G4j2asWzQwvKGxaVlssWl2QKXOl3KXdZRWgjJzdJoVPm8U+an6sxq5olmnQqFZSkxg4Wj9dVyy371Mg4vbNGcS+uMwoEL8JkrmJ6d6frFT3FJRZKaKRxYgHrul6k7tnf2dX5mC9veZPwcb+4ZkjQ07Qdi03WLdVzjNFn5q5LOkXSq3E+QdKxCyGU2utE/uydxyDr4wV8ISXK3QctUxDw6F/SdAoEV5EoFgQVMCK5dcDgRJjt00uq533BmZWXoZ7gwka7dcILq4ZUKeq3cXiUNnqoQOhXjgYMHXTo4A5XKw3l9UJAruMtZdZ0CL/cuSU5gAQDwXK67LtPIyJlK6U0yf7MaOkdZnKsQpJR+/g/wc3uKPkJgAQBwqO7uc2T2dg0Pv02ezlae5/IklUkqy9E/wPPGlUlJgwQWAADd3Qtl9naZfl/ur1aeVUZnp0xqNhkfHF5fufYTWACA6Wvjxlcoxkslf4diXDh6HFUiqnA0iSWZ7yWwAADTy8qVUcuXv1lBVyr5G5XFispSKgrGBmPUWP4MgQUAmB6uuy7T8PDb5b5ewf69QpC8ZLYKY86TeggsAMBUZ9q06W0aHvqAzF6jEEYPVOfsP4xHXLkruG0lsAAAU1d392tk+oiCvVlmnAGI8U55qSjcYiKwAABT0MaNy5SFa+W6RDFWOL4KE1ZYpgEvbTuBBQCYOi6/PFfnrCuk8GHFbJGKgoPXMXGCSYXvGa7WdxJYAICp4ZqN5yqFGxTjr3OpBUwGsyC3tLV35Qf7CCwAQHu77rqKBgc3yMOHFcMsZqwwaUKQuz8qM+5FCABoYxs2rNDQ0KeUZ2/kWlaYdCaFYPdLEoEFAGhP3d0XKNgnFeMCwgqtwJuFVDqBBQBoQ+vX15THP5aF9ZKYtUJrCEFeln1B9giBBQBoLxs3LlMIn1OW/aaKQnJnTNASLAQppce2Vxb1EFgAgPaxYcOrFcN/U4wnc4YgWk4IknSfzj+/JLAAAO1h06aVCnazzDpZEkRLclcy+/6zvcWIAABaWnf3WgX7W0md3OoGLclMqdEcDmY/JLAAAO0QV9cpC5+Se87NmdGyfRWjJH94x8LdTxz8GEuEAICWfM/Spo03KMu6VZYczI7WFoPU1Hf1ho8WBBYAoHXjauPGP1GWbyCu0A68KKQQbzv0YwQWAKC14moTcYU2EoO8KLeOVEZ+eOiHOQYLANA6Nm28Xlm+gWtcoW32CLJMkn2n9/xr9hNYAIDWs3HjB5Vl13CmINpKWcoUvvaLH2aJEAAw+TZteo9M16tMzFyhfcQob5ZbRlzf/8W/YgYLADC5urvPU7AbJQXiCu3EsiiZ/n7vRev6CCwAQOvYuPEMBftrmWrEFdqrrkzeLApL+tJz/TWBBQCYHNdcc5yCfVExLlDJRUTRZn2VRXlZ3rO9uugeAgsA0BpWrowqm59Rnp/NvQXRnoVlkvzzB2/uTGABACbf0qXdyvKVajYZC7SfGJQaze1WZl97vk8hsAAAE2vjxtcrhv/E5RjQrizLZPIv7Lhk7R4CCwAw+TZsmKdgNymEDg5qR1sKQd5o9pVluOUFP42RAgBM4JvTDcrzlzJ7hXZleSZP6UtPX3zVv7zQ53GhUQDAxNi0aaWCXcpxV2jfujJ5oznkbp/6pfsSjBYAYNx1dy+U/E9kZgwG2rav8lxK6b/vvGjdQwQWAKAF+MeU50tZGkTbCkHebPaZ6YYX9emMGABgXG3a8BsK4VKud4V2ZnkmL/2W7Rde/SiBBQCYXOvX16TwCYWQcdYg2lYMSvVGT1Plf3mx/4TAAgCMnxDepyw7l6VBtDOLUTJ9fPdFG3oILADA5PrQhxbI9EEl7jOINo6rPJM3mvdU6rNvOax9C4YOADAums31qlQWE1ho37oyeUpNS+kDT1122QiBBQCYXNdcfaJM/5ED29HWfVXJ5UX5ue0Xrb/jcP8tgQUAGHtltk55PocD29G2cZVl8nrjMVntD4/k3xNYAICx1d19kqRLmL1C+9aVyVMq5b6+58IrdhNYrYHdNQDT3Wpmr9DWfTW6NPjZHauu/j9H+jW4F+HY91W+dM4FcxmHsdUfjkm9vTf1ScYrNtDKNm1aLPlFXJYBbRtXea5Ub2weGRq59mi+DoE1lmmlUrJwTsPtAUZjTDd3daSRPYuOueDXewa0m/EAWvmF0C9WJZ/HDZ3RlkKQl2WfpP/Qe8U1+wmslkoBVWRhMSMxtqPqKmvukSVtoJVdeeUxkr+H2Su051uNyUJQaja6e1atv+9ovxyBNT67cAzB2IdrwagCLe6Y2nkK2SkEFtryfaaSKw2PfLbnovW3jMXXY0YAADA2kr1HZowD2i+uqhV5vXGH5szYOFZfk8ACABy9DRtWyPR6Zq/QdnGVZ0qN5qMK2cU9b79iiMACALSOGN+lPK9xaQa0VVzFKC/L3d4sLtjx+6u3juXXJrAAAEfnpptyeXoX9xxEWwlB7j5kZXnxzks23DvmX54RBgAclccfPlchnEFgoZ3iSqamN5uXb1+1/hvj8hCMMgDgqKT4dmVZZHkQbRNXUpnKYm3PxRv+dtwehpEGAByxyy/PJZ3H7BXaJa7M5J7Kq3deuP6mcX0oRhsAcMTmzlwh0+kEFtohriSV3izX9Fx49Y3j/nCMOADgiBXhDcqzCsuDaGkxSLKGl8X7d1x09V9OxENyJXcAwFHspttvcvMKtDLLojylAaXyfT2r1n95wn41GHoAwBG55pq5cr2c5UG0bFzluTz50+7pHTsuvPrLE/nYBBYA4Mg0m2cq2EICCy0ZV9WKvCgeUqP+lp4Lrv72RD8+gQUAOMJ3MHuVsoybD6LVtssD9xZs3hYazTftuKT7nyfjaRBYAIAj9e84uB0tJQaZmadG/ZN5Y8/vbrt04/bJeioc5A4AOHzr19ckP5PlQbQKq+TyotwtL9f3XHD1Fyf7+RBYAIAjePfIlki+hBksTH5Z2WhcNYofhKTV21ZdfX8rPC2WCAEAhy+llyrGGoGFSW2rPJNkDR9pXO/9lfO2rVp7f6s8N2awAABHMmtwmkKQypKxwMQLJstzpWZzc0i+Yfuqdd9ttadIYAEAjoCfJq4wislo+9FjrQZ9pPHnddcn9l60rq8VnyeBBQA4EicpEViYwLDKoiSTN4tvJdm1O1etu7eVny/HYAEADs/69TVJL+H4K0yIGEava1X6T1NRrNrxyJ637Lxg7b2t/rSZwQIAHJ5arVON+nEEFsZVCLI8kzebO1Kz8alKPd301GXr97XL0yewAACHZ3h4nmKYxUBgXMQgyzJ5s+hJRfOWzO2mrRdctaPdvg0CCwBweEKYrxAyZrAwliyLUgjyZrEl1Rufj83ilsm8EjuBBQCY+MCKUSoKxgJHuS3Z6GxVmZRS2qyU/qsP+1d2vnfdrnb/1ggsAMDhcT9Wxj2ecYTMZDFKMcgbzT4vim+b6/N5fc/tT1320ZGp8m0SWACAw3yDTHMZBBxxVNUbhZfpXpXl34Wi+fVtF298bCp+ywQWAODweJjNIOCXBZXCgaiSKTUbI0rlj1WW30gWbt2ZLfhnnX/+lL4NAIEFADjcN88ZDAJ+MagsBCkGyUzeaMqTb1Nq3qtg3/ZMd/Ro4SNTPaoILADAkXMnsKZpRMkkWZAFO/D/JpWlvCiHUkpbLaUHZHa3e7o7V+XBLRde2Ttdh4vAAgBgstslhNwquVrj9kMHQupfg1oqk7woXGZ98rLXTdvd9LjcfmrBHjD5IyErtm07f+MwP00CCwCAllA2mt/0RnN/SmkST880yVVKGjalQQu23932ynyPpfCMmz2jwncVtWzvrvPXDPBTI7AAAGhNZpK77X3wmQ/qxj/9MQMydXCzZwAAJls1VBgEAgsAAAAEFgAAAIEFAABAYAEAAIDAAgAAILAAAAAILAAAAAILAAAABBYAAACBBQAAQGABAACAwAIAACCwAAAACCwAAAAQWAAAAAQWAAAAgQUAAAACCwAAgMACAAAgsAAAAAgsAAAAEFgAAAAEFgAAAIEFAAAAAgsAAIDAAgAAILAAAABAYAEAABBYAAAABBYAAACBBQAAAAILAACAwAIAACCwAAAAQGABAAAQWAAAAAQWAAAACCwAAAACCwAAgMACAAAAgQUAAEBgAQAAEFgAAAAEFgAAAAgsAAAAAgsAAGA6yCRjFNDiTC7Fdv4OXAomE79vYzqqDOZk7pybScaP4Ohf3kwyM5UlgznlAsv9KYYBrR0nbjLbE4OVbfwi+oyUtsjd+YmO0XaR+QijMGnb8y4ltuex25iTJNUZiKnl/wNgNhfaeLgW8AAAAABJRU5ErkJggg==';
+const DEMO_HUB = 'https://demo.ltplabs.com/';
+const UNLOCK_REQUIRES_QUIZ = true;
+const INSTANT_FEEDBACK = true;
+
+/* ======================= CONTENT ======================= */
+const W = 'https://ltplabs.com';
+const CS = W + '/capabilities/customer-sales', VCO = W + '/capabilities/value-chain-operations', AIS = W + '/capabilities/ai-strategy';
+const CSt = s => W + '/case-studies/' + s;
+
+const OFFER_PAGES = {
+  cs:  { label: 'Customer & Sales',          href: CS,  color: '#F26900' },
+  vco: { label: 'Value Chain & Operations',  href: VCO, color: '#00AB8E' },
+  ai:  { label: 'AI Strategy & Empowerment', href: AIS, color: '#19155E' }
+};
+
+const SUBOFFERS = [
+  { offer: 'cs', group: 'Customer & Sales', items: [
+    { id:'cva', name:'Customer value analytics',     page: CS+'/customer-value-analytics',   cs:{ label:'Restructure of a marketing department - capturing more value per customer', href: CSt('restructure-of-a-marketing-department') } },
+    { id:'cac', name:'Customer activation',          page: CS+'/customer-activation',        cs:{ label:'Meet the market: conversational personas that talk back', href: CSt('meet-the-market-conversational-personas-that-talk-back') } },
+    { id:'ret', name:'Retention & experience',       page: CS+'/retention--experience',      cs:{ label:'Automated hotel reservations with AI', href: CSt('automated-hotel-reservations-with-ai') } },
+    { id:'acq', name:'Acquisition targeting',        page: CS+'/acquisition-targeting',      cs:{ label:'Meet the market: conversational personas that talk back', href: CSt('meet-the-market-conversational-personas-that-talk-back') } },
+    { id:'sp',  name:'Sales performance',            page: CS+'/sales-performance',          cs:{ label:'AI-powered pricing optimization: unlocking margin in B2B markets', href: CSt('ai-powered-pricing-optimization-unlocking-margin-in-b2b-markets') } },
+    { id:'spa', name:'Sales process automation',     page: CS+'/sales-process-automation',   cs:{ label:'Automated hotel reservations with AI', href: CSt('automated-hotel-reservations-with-ai') } },
+    { id:'vbp', name:'Value-based pricing',          page: CS+'/value-based-pricing',        cs:{ label:'AI-powered pricing optimization: unlocking margin in B2B markets', href: CSt('ai-powered-pricing-optimization-unlocking-margin-in-b2b-markets') } },
+    { id:'spp', name:'Sales and portfolio planning', page: CS+'/sales-and-portfolio-planning', cs:{ label:'Can intraday discounts save fresh products before they become waste?', href: CSt('can-intraday-discounts-save-fresh-products-before-they-become-waste') } },
+    { id:'mdg', name:'Market dynamics & growth',     page: CS+'/market-dynamics-growth',     cs:{ label:'Meet the market: conversational personas that talk back', href: CSt('meet-the-market-conversational-personas-that-talk-back') } }
+  ]},
+  { offer: 'vco', group: 'Value Chain & Operations', items: [
+    { id:'df',  name:'Demand forecasting',            page: VCO+'/demand-forecasting',            cs:{ label:'How Machine Learning improves supply chain resilience', href: CSt('how-machine-learning-improves-supply-chain-resilience') } },
+    { id:'sss', name:'Service & supply strategy',     page: VCO+'/service-supply-strategy',       cs:{ label:'Strategic supply chain optimization through end-to-end cost modelling', href: CSt('strategic-supply-chain-optimization-through-end-to-end-cost-modelling') } },
+    { id:'nd',  name:'Network design',                page: VCO+'/network-design',                cs:{ label:'Process redesign in a digital supply chain transformation', href: CSt('process-redesign-to-enable-analytical-opportunities-in-a-digital-supply-chain-transformation') } },
+    { id:'sop', name:'Sales and operations planning', page: VCO+'/sales-and-operations-planning', cs:{ label:'From two weeks to hours: optimizing production planning at industrial scale', href: CSt('from-two-weeks-to-hours-optimizing-production-planning-at-industrial-scale') } },
+    { id:'rp',  name:'Replenishment & purchasing',    page: VCO+'/replenishment-purchasing',      cs:{ label:'Optimizing CUF Hospitals inventory management', href: CSt('optimizing-cuf-hospitals-inventory-management') } },
+    { id:'wp',  name:'Workforce planning',            page: VCO+'/workforce-planning',            cs:{ label:'From two weeks to hours: optimizing production planning at industrial scale', href: CSt('from-two-weeks-to-hours-optimizing-production-planning-at-industrial-scale') } },
+    { id:'os',  name:'Operational scheduling',        page: VCO+'/operational-scheduling',        cs:{ label:'From two weeks to hours: optimizing production planning at industrial scale', href: CSt('from-two-weeks-to-hours-optimizing-production-planning-at-industrial-scale') } },
+    { id:'lfo', name:'Layout and flow optimization',  page: VCO+'/layout-and-flow-optimization',  cs:{ label:'From fragmented data to a scalable master data management foundation', href: CSt('from-fragmented-data-and-disconnected-processes-to-a-scalable-master-data-management-foundation') } },
+    { id:'ppc', name:'Process performance control',   page: VCO+'/process-performance-control',   cs:{ label:'Process redesign in a digital supply chain transformation', href: CSt('process-redesign-to-enable-analytical-opportunities-in-a-digital-supply-chain-transformation') } }
+  ]},
+  { offer: 'ai', group: 'AI Strategy & Empowerment', items: [
+    { id:'aid', name:'AI Discovery',  page: AIS+'/ai-discovery',  cs:{ label:'Every retailer now has an AI strategy - finding real AI fit', href: W+'/insights/every-retailer-now-has-an-ai-strategy' } },
+    { id:'air', name:'AI Readiness',  page: AIS+'/ai-readiness',  cs:{ label:'Process redesign in a digital supply chain transformation', href: CSt('process-redesign-to-enable-analytical-opportunities-in-a-digital-supply-chain-transformation') } },
+    { id:'aig', name:'AI Governance', page: AIS+'/ai-governance', cs:{ label:'Unlocking enterprise GenAI with structured governance', href: CSt('unlocking-enterprise-genai-with-structured-governance-and-collaborative-intelligence') } },
+    { id:'ail', name:'AI Literacy',   page: W+'/capabilities/ai-literacy',   cs:{ label:'Shaping the next generation of AI professionals in a leading bank', href: CSt('shaping-the-next-generation-of-ai-professionals-in-a-leading-bank') } },
+    { id:'eai', name:'Enterprise AI', page: W+'/capabilities/enterprise-ai', cs:{ label:"Leveraging GenAI for a helicopter view of a hotel chain's expenses", href: CSt('leveraging-genai-to-classify-and-unlock-a-helicopter-view-of-a-hotel-chains-expenses') } }
+  ]}
+];
+const ALL_TOPIC_IDS = SUBOFFERS.flatMap(g => g.items.map(t => t.id));
+
+/* Case studies and insights per sub-offer, from the Offers classification sheet (TO-BE offer + secondary offer). Case studies first. */
+const RESOURCES = window.RESOURCES || {};
+const MAX_CASES = 3, MAX_INSIGHTS = 2;
+
+const PLAYBOOK = [
+  'Know the three Offers well enough to explain what each is and who it is for - as fluently as your own project.',
+  'In client conversations, listen for decision pains - pricing, churn, planning, AI adoption - and name the matching Offer.',
+  'Follow up the same day with the Offer page or a case study, while the conversation is warm.',
+  'At events, lead with proof: the planning suite piloting at Renova and BA Glass, or GenAI4All\u2019s results.',
+  'Spotted interest? Flag it to the Offer owners - they take it from there.'
+];
+
+/* Quiz: each question keeps the key message it tests; correct answer is index c, options are shuffled per session. */
+const QUIZ = [
+  { key:'the three Offers',
+    q:'Which of these is NOT one of LTP\u2019s three Offers?',
+    o:['Customer & Sales','Value Chain & Operations','AI Strategy & Empowerment','Retail & Consumer Intelligence'], c:3,
+    why:'The three Offers are Customer & Sales, Value Chain & Operations and AI Strategy & Empowerment. Retail is an industry we serve, not an Offer.' },
+  { key:'why Offers',
+    q:'A colleague says \u201cOffers are basically a new marketing campaign.\u201d Which correction is closest to what was presented?',
+    o:['They are the way we grow through what we have already built - systematically, beyond personal networks','They replace the Verticals as the way we organise accounts','They are a cost-reduction move for marketing','They centralise all selling in a single team'], c:0,
+    why:'Offers put what we have built at the front of how we grow, so opening doors no longer depends on who knows whom.' },
+  { key:'systematic selling',
+    q:'Offers move LTP\u2019s selling from one logic to another. Which shift is the right one?',
+    o:['From relationship-based to value / solution-based','From price-based to volume-based','From project-based to retainer-based','From vertical-based to horizontal-based'], c:0,
+    why:'Relationships still matter, but the Offer gives the conversation a concrete value proposition to anchor on.' },
+  { key:'ambassador model',
+    q:'The ambassador model asks every LTPeer to do three things. Which verb is NOT one of them?',
+    o:['Know','Grow','Open','Close'], c:3,
+    why:'Know, Grow, Open. Closing is not your job - once interest is spotted, the Offer owners take it from there.' },
+  { key:'VC&O main bet',
+    q:'Which artefact was presented as the main bet of the Value Chain & Operations Offer, currently piloting at Renova and BA Glass?',
+    o:['A planning suite prototype','A pricing engine','A logistics marketplace','A network design simulator'], c:0,
+    why:'The planning suite prototype is the VC&O bet - the proof point to lead with at events.' },
+  { key:'VC&O sub-offers',
+    q:'Which pair contains ONLY Value Chain & Operations sub-offers?',
+    o:['Demand forecasting and Workforce planning','Demand forecasting and Value-based pricing','AI Governance and Network design','Customer activation and Operational scheduling'], c:0,
+    why:'Value-based pricing and Customer activation sit under Customer & Sales; AI Governance under AI Strategy & Empowerment.' },
+  { key:'C&S decision areas',
+    q:'The Customer & Sales Offer is organised around three decision areas. Which set is correct?',
+    o:['Customer intelligence, commercial execution and revenue optimization','Marketing, sales and service','Acquisition, retention and pricing','Strategy, people and technology'], c:0,
+    why:'Customer intelligence (know the customer), commercial execution (act with precision), revenue optimization (grow margin).' },
+  { key:'C&S sub-offer',
+    q:'A client wants to price each segment on the value it gets rather than cost-plus. Which sub-offer, under which Offer?',
+    o:['Value-based pricing, under Customer & Sales','Sales performance, under Customer & Sales','Value-based pricing, under Value Chain & Operations','Service & supply strategy, under Value Chain & Operations'], c:0,
+    why:'Value-based pricing is a revenue optimization sub-offer inside Customer & Sales.' },
+  { key:'AI S&E pillars',
+    q:'AI Strategy & Empowerment builds the AI-ready enterprise on three pillars. Which of these is NOT one of them?',
+    o:['Strategy','People','Technology','Process'], c:3,
+    why:'Strategy (roadmap and investments), People (literacy and adoption) and Technology (the data backbone).' },
+  { key:'AI Discovery fit',
+    q:'A client says: \u201cWe know AI matters, we just do not know where it fits our business.\u201d Which sub-offer fits best?',
+    o:['AI Discovery','AI Readiness','AI Governance','Enterprise AI'], c:0,
+    why:'Discovery finds where AI fits and is worth it. Readiness assesses the foundations once you know where you are going.' }
+];
+
+/* ======================= STATE ======================= */
+const params = new URLSearchParams(location.search);
+const IS_HOST = params.get('host') === '1';
+const STORE_KEY = 'ltp-offers-companion-v2';
+
+let S = {
+  screen:'welcome', nameInput:'', name:'', tab:'home', view:'root',
+  quizStage:'intro', qIndex:0, correct:0, selected:null, quizDone:false, score:0,
+  situation:null, topics:[], topicsConfirmed:false, order:null
+};
+try { Object.assign(S, JSON.parse(localStorage.getItem(STORE_KEY)) || {}); } catch (e) {}
+S.selected = null;
+S.topics = (S.topics || []).filter(id => ALL_TOPIC_IDS.includes(id));
+if (!S.order || S.order.length !== QUIZ.length) S.order = QUIZ.map(q => shuffle(q.o.map((_, i) => i)));
+
+let LB = [];            // leaderboard rows from Supabase
+let LIVE = false;       // realtime channel connected
+let lastPoll = 0;
+
+function shuffle(a){ for (let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+function save(patch){ Object.assign(S, patch); localStorage.setItem(STORE_KEY, JSON.stringify(S)); render(); }
+function esc(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function toast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(t._h); t._h=setTimeout(()=>t.classList.remove('show'),2200); }
+
+/* ======================= SUPABASE ======================= */
+const db = window.supabase ? window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+async function loadLeaderboard(){
+  if (!db) return;
+  const { data, error } = await db.from('participants').select('name,score,quiz_done,updated_at').eq('quiz_done', true).order('score',{ascending:false}).order('updated_at',{ascending:true}).limit(200);
+  if (!error && data){ LB = data; lastPoll = Date.now(); render(); }
+}
+async function upsertParticipant(patch){
+  if (!db || !S.name) return;
+  const row = Object.assign({ name: S.name, updated_at: new Date().toISOString() }, patch);
+  const { error } = await db.from('participants').upsert(row, { onConflict: 'name_key' });
+  if (error){ console.error(error); toast('Could not save - check your connection'); }
+}
+function subscribe(){
+  if (!db) return;
+  db.channel('room')
+    .on('postgres_changes', { event:'*', schema:'public', table:'participants' }, () => loadLeaderboard())
+    .subscribe(status => { LIVE = status === 'SUBSCRIBED'; render(); });
+  // safety net in case realtime drops
+  setInterval(() => { if (!LIVE || Date.now() - lastPoll > 15000) loadLeaderboard(); }, 8000);
+}
+
+/* ======================= DERIVED ======================= */
+function derived(){
+  const quizDone = S.quizDone;
+  const topicsUnlocked = !UNLOCK_REQUIRES_QUIZ || quizDone;
+  const summaryUnlocked = topicsUnlocked && S.topicsConfirmed && (S.situation === 'no' || S.topics.length > 0);
+  return { quizDone, topicsUnlocked, summaryUnlocked };
+}
+function initials(n){ return (n || '?').split(' ').map(w => w[0]).slice(0,2).join('').toUpperCase(); }
+function firstName(n){ return (n || '').split(' ')[0]; }
+function logo(){ return `<img class="logo-img" src="${LOGO_SRC}" alt="LTP" onerror="this.outerHTML='<div class=&quot;wordmark&quot;>LTP<span>.</span></div>'">`; }
+const ARROW = '<svg viewBox="0 0 24 24" fill="none" stroke="#8B8F9B" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>';
+const TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px"><path d="M20 6 9 17l-5-5"/></svg>';
+
+/* ======================= VIEWS ======================= */
+function welcome(){
+  return `<div class="phone"><div class="page" style="flex:1;padding:32px 24px 40px">
+    <div class="welcome-logo">${logo()}</div>
+    <div style="flex:1"></div>
+    <div>
+      <div class="eyebrow">Outlabs 2026 \u00b7 Offers</div>
+      <h1 style="font-size:30px;font-weight:800;line-height:1.15;margin:12px 0 10px">Offers as a way of growing</h1>
+      <p class="sub" style="font-size:14px;line-height:1.55;margin-bottom:28px">Test your understanding at the end of the session and unlock a personal Offer Toolkit with the resources most useful to you.</p>
+      <label class="lbl" for="pname">Your name</label>
+      <input id="pname" class="input" type="text" value="${esc(S.nameInput)}" placeholder="e.g. Ana Silva" autocomplete="name" data-input="nameInput">
+      <button class="btn" style="margin-top:12px" data-act="start" ${S.nameInput.trim() ? '' : 'disabled'}>Join the session</button>
+      <div style="display:flex;gap:8px;margin-top:20px;justify-content:center;font-size:10px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px"><span>Quiz</span><span style="color:var(--line)">\u00b7</span><span>Your Toolkit</span></div>
+    </div>
+  </div></div>`;
+}
+
+function home(d){
+  const step = (n, title, desc, status, locked, act) =>
+    `<div class="step ${locked?'locked':''}" ${locked?'':`data-act="${act}"`}><div class="dot">${n}</div><div style="flex:1;min-width:0"><div class="step-title">${title}</div><div class="step-desc">${desc}</div></div><span class="chip">${status}</span></div>`;
+  const s1 = d.quizDone ? `Completed \u00b7 ${S.score}/${QUIZ.length}` : (S.quizStage === 'question' ? 'In progress' : 'Not started');
+  const s2 = S.topicsConfirmed ? (S.situation === 'no' ? 'Completed' : `Completed \u00b7 ${S.topics.length} picked`) : (d.topicsUnlocked ? 'Not started' : 'Finish the quiz first');
+  return `<div class="page" style="gap:20px">
+    <div><div class="eyebrow">Offers as a way of growing</div><h2 class="title">Hi, ${esc(firstName(S.name))}</h2><p class="sub">Complete the two steps below to unlock your personalized Offers Toolkit.</p></div>
+    <div class="steps">
+      ${step('1','Are you Offer-driven?',`${QUIZ.length} questions to check`, s1, false, 'goQuiz')}
+      ${step('2','Offers for you','Tailor it to your work', s2, !d.topicsUnlocked, 'goTopics')}
+      ${step('3','Your personal Offer Toolkit','Links and docs to use right away', d.summaryUnlocked?'Unlocked':'Locked', !d.summaryUnlocked, 'goSummary')}
+    </div>
+  </div>`;
+}
+
+function topics(){
+  if (S.situation == null){
+    return `<div class="page">
+      <div><button class="link-btn" data-act="goHome">\u2190 Back</button></div>
+      <div><h2 class="title" style="margin:0 0 8px;line-height:1.3">One quick question first</h2><p style="font-size:14px;line-height:1.55">In recent months, were you in a situation where a customer, former customer or prospect wanted to understand LTP\u2019s value proposition in an area - or explore how LTP could help them with a topic?</p></div>
+      <div class="list">
+        <div class="choice" data-act="sitYes"><b>Yes, that happened</b><span>Pick the topics - I\u2019ll get the right links and docs</span></div>
+        <div class="choice" data-act="sitNo"><b>No, not yet</b><span>Show me how to unlock those conversations myself</span></div>
+      </div>
+    </div>`;
+  }
+  const n = S.topics.length;
+  return `<div class="page">
+    <div><button class="link-btn" data-act="goHome">\u2190 Back</button></div>
+    <div><h2 class="title" style="margin:0 0 4px">What was the topic?</h2><p class="sub">Pick the sub-offers that came up. Your Toolkit will have the Offer page, plus each sub-offer page and its best case studies.</p></div>
+    <div class="list g16">
+      ${SUBOFFERS.map(g => `<div><div class="group-h" style="color:${OFFER_PAGES[g.offer].color}">${g.group}</div><div class="list g6">
+        ${g.items.map(t => `<div class="topic ${S.topics.includes(t.id)?'on':''}" data-act="toggle" data-id="${t.id}"><div class="check">${S.topics.includes(t.id)?TICK:''}</div><div style="flex:1">${t.name}</div></div>`).join('')}
+      </div></div>`).join('')}
+    </div>
+    <button class="btn" data-act="confirmTopics" ${n?'':'disabled'}>${n ? `Build my Toolkit (${n})` : 'Pick at least one topic'}</button>
+    <button class="link-btn" data-act="sitNo">Actually, I haven\u2019t had this situation</button>
+  </div>`;
+}
+
+function resLink(type, label, href, fill){
+  return `<a class="res" href="${href}" target="_blank" rel="noopener"><span class="tag ${fill?'fill':''}" ${fill?`style="background:${fill}"`:''}>${type}</span><span class="t" data-url="${href}">${esc(label)}</span>${ARROW}</a>`;
+}
+function picks(t){
+  const e = RESOURCES[t.id];
+  const rows = e ? e.r : [];
+  let cases = rows.filter(r => r[0] === 'C').slice(0, 2);
+  if (!cases.length) cases = rows.filter(r => r[0] === 'I').slice(0, 2);
+  if (!cases.length && t.cs) return [{ t:'Case', l:t.cs.label, h:t.cs.href }];
+  return cases.map(([k, l, s]) => ({ t: k === 'C' ? 'Case' : 'Insight', l, h: W + (k === 'C' ? '/case-studies/' : '/insights/') + s }));
+}
+function toolkitData(){
+  // one section per Offer, in Offer order, with only the selected sub-offers
+  return SUBOFFERS.map(g => ({ key:g.offer, op: OFFER_PAGES[g.offer], items: g.items.filter(t => S.topics.includes(t.id)).map(t => ({ name:t.name, page:t.page, links: picks(t) })) }))
+    .filter(sec => sec.items.length);
+}
+function protip(){
+  return `<div class="protip"><div class="card-title">Pro tip</div><p>Visit our Demo Hub at <a href="${DEMO_HUB}" target="_blank" rel="noopener">${DEMO_HUB}</a> for a proper showcase of what each Offer is building.</p></div>`;
+}
+function summary(){
+  const n = S.topics.length;
+  const linksMode = S.situation === 'yes';
+  const intro = linksMode
+    ? `Links and docs for the ${n} ${n===1?'topic':'topics'} you flagged - use them in your next conversation.`
+    : 'No pending conversation yet - here is how to create one, and the hooks to do it with.';
+  let body = '';
+  if (linksMode){
+    const secs = toolkitData().map(sec => `<div class="offer-sec" style="--o:${sec.op.color}">
+      <div class="offer-head"><div class="oh-k">Offer</div><div class="oh-t">${sec.op.label}</div></div>
+      <div class="offer-body">
+        ${resLink('Offer', `${sec.op.label} - Offer page on ltplabs.com`, sec.op.href, sec.op.color)}
+        ${sec.items.map(it => `<div class="sub-block"><div class="sb-t"><i></i>${esc(it.name)}</div><div class="list g6">
+          ${resLink('Web', `${it.name} - sub-offer page`, it.page)}${it.links.map(r => resLink(r.t, r.l, r.h)).join('')}
+        </div></div>`).join('')}
+      </div></div>`);
+    body = `<div class="list g12">${secs.join('')}</div>`;
+  } else {
+    body = `<div class="card" style="padding:20px"><div class="card-title">Unlock these conversations yourself</div><p class="sub" style="font-size:12px;margin-top:4px">You don\u2019t need to wait for the question - use the Offers as hooks whenever they\u2019re relevant.</p>
+        <div class="bullets">${PLAYBOOK.map(p => `<div class="bullet"><i></i><span>${p}</span></div>`).join('')}</div></div>
+      <div class="card"><div class="small-label">Your hooks - the three Offer pages</div><div class="list">
+        ${Object.values(OFFER_PAGES).map(op => resLink('Web', `${op.label} - Offer page on ltplabs.com`, op.href, op.color)).join('')}
+      </div></div>
+      <button class="link-btn orange noprint" data-act="sitYes">Actually, I did have such a conversation - pick the topics</button>`;
+  }
+  return `<div class="page">
+    <div class="noprint"><button class="link-btn" data-act="goHome">\u2190 Back</button></div>
+    <div><div class="eyebrow">Offers as a way of growing</div><h2 class="title">${esc(S.name)}\u2019s Offer Toolkit</h2><p class="sub">${intro}</p></div>
+    ${body}
+    ${protip()}
+    <button class="btn-ghost noprint" data-act="download">Download my Toolkit (PDF)</button>
+  </div>`;
+}
+
+function quiz(d){
+  if (S.quizStage === 'intro' && !d.quizDone){
+    return `<div class="page">
+      <div class="hero"><div class="eyebrow">Understanding check</div><h2>Let\u2019s see how your Offer-driven mindset scores</h2><p>One point per correct answer. Your score joins the live session leaderboard and unlocks your personalized Offer Toolkit.</p></div>
+      <button class="btn" data-act="startQuiz">Start the Quiz</button>
+    </div>`;
+  }
+  if (S.quizStage === 'question'){
+    const q = QUIZ[S.qIndex]; const order = S.order[S.qIndex]; const answered = S.selected != null;
+    const pct = (S.qIndex + (answered?1:0)) / QUIZ.length * 100;
+    const opts = order.map(i => {
+      let cls = 'opt' + (answered ? ' done' : '');
+      if (answered && INSTANT_FEEDBACK){ if (i === q.c) cls += ' right'; else if (i === S.selected) cls += ' wrong'; }
+      else if (answered && i === S.selected) cls += ' picked';
+      return `<div class="${cls}" data-act="pick" data-i="${i}">${esc(q.o[i])}</div>`;
+    }).join('');
+    return `<div class="page">
+      <div><div class="qmeta"><span>Question ${S.qIndex+1} of ${QUIZ.length}</span><span>${S.correct} correct</span></div><div class="bar"><i style="width:${pct}%"></i></div></div>
+      <h2 class="qtext">${esc(q.q)}</h2>
+      <div class="list">${opts}</div>
+      ${answered && INSTANT_FEEDBACK ? `<div class="why">${esc(q.why)}</div>` : ''}
+      ${answered ? `<button class="btn" data-act="next">${S.qIndex + 1 < QUIZ.length ? 'Next question' : 'See my score'}</button>` : ''}
+    </div>`;
+  }
+  // result
+  const msg = S.score >= 9 ? 'Offer ambassador material.' : S.score >= 7 ? 'Strong grasp - a quick review and you are set.' : S.score >= 5 ? 'Good base - your Toolkit will fill the gaps.' : 'Your Offer Toolkit is made for you - start there.';
+  return `<div class="page">
+    <div class="scorebox"><div class="eyebrow" style="color:var(--muted)">Your score</div><div class="big">${S.score}<small>/${QUIZ.length}</small></div><div style="font-size:13px;font-weight:600">${msg}</div></div>
+    ${leaderboard(false)}
+    <button class="btn" data-act="resultCta">${d.summaryUnlocked ? 'View your Offer Toolkit' : 'Build your Offer Toolkit'}</button>
+  </div>`;
+}
+
+function leaderboard(host){
+  const meKey = (S.name||'').trim().toLowerCase();
+  const rows = LB.map((r, i) => {
+    const me = !host && r.name.trim().toLowerCase() === meKey;
+    return `<div class="row ${me?'me':''} ${host && i===0 ? 'top1':''}"><span class="rk">${i+1}</span><span class="nm">${esc(r.name)}${me?' (you)':''}</span><span class="pt">${r.score}</span></div>`;
+  }).join('');
+  const empty = `<div class="sub" style="padding:6px 10px 12px">No scores yet - be the first to finish.</div>`;
+  return `<div class="lb"><div class="lb-h"><b>Leaderboard</b><span class="live ${LIVE?'':'off'}"><i></i>${LIVE?'live':'refreshing'} \u00b7 ${LB.length} ${LB.length===1?'player':'players'}</span></div>${LB.length ? rows : empty}</div>`;
+}
+
+function nav(d){
+  const on = t => t ? 'on' : '';
+  const homeOn = S.tab==='home' && S.view==='root', tkOn = S.tab==='home' && S.view!=='root';
+  return `<div class="nav noprint">
+    <div class="${on(homeOn)}" data-act="goHome"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/></svg><span>Home</span></div>
+    <div class="${on(S.tab==='quiz')}" data-act="goQuiz"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M6 2h12v7a6 6 0 0 1-12 0V2Z"/><path d="M12 15v4"/><path d="M8 21h8"/></svg><span>Quiz</span></div>
+    <div class="${on(tkOn)}" data-act="goToolkit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><rect x="2" y="6" width="20" height="14" rx="2"/></svg><span>Toolkit</span></div>
+  </div>`;
+}
+
+function main(){
+  const d = derived();
+  let content = '';
+  if (S.tab === 'quiz') content = quiz(d);
+  else if (S.view === 'topics') content = topics();
+  else if (S.view === 'summary' && d.summaryUnlocked) content = summary();
+  else content = home(d);
+  return `<div class="phone">
+    <div class="topbar noprint">${logo()}<div class="who"><div class="avatar">${esc(initials(S.name))}</div><span>${esc(S.name)}</span></div></div>
+    <div class="scroll">${content}</div>
+    ${nav(d)}
+  </div>`;
+}
+
+function hostView(){
+  const done = LB.length;
+  return `<div class="phone host">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:24px">
+      <div style="display:flex;align-items:center;gap:16px">${logo()}<div><h1>Offers as a way of growing</h1><div class="stat">Session leaderboard \u00b7 <span class="live ${LIVE?'':'off'}"><i></i>${LIVE?'live':'refreshing'}</span> \u00b7 ${done} ${done===1?'score':'scores'} in</div></div></div>
+      <div class="host-actions"><button class="btn-ghost" data-act="refresh">Refresh</button><button class="btn-ghost" data-act="reset">Reset session\u2026</button></div>
+    </div>
+    <div class="host-grid">
+      <div class="panel">${leaderboard(true)}</div>
+    </div>
+  </div>`;
+}
+
+function render(){
+  const app = document.getElementById('app');
+  const active = document.activeElement; const activeKey = active && active.dataset ? active.dataset.input : null;
+  const selStart = active && active.selectionStart;
+  app.innerHTML = IS_HOST ? hostView() : (S.screen === 'welcome' ? welcome() : main());
+  if (activeKey){ const el = app.querySelector(`[data-input="${activeKey}"]`); if (el){ el.focus(); try { el.setSelectionRange(selStart, selStart); } catch(e){} } }
+}
+
+/* ======================= ACTIONS ======================= */
+document.addEventListener('input', e => {
+  const k = e.target.dataset && e.target.dataset.input; if (!k) return;
+  S[k] = e.target.value;
+  const btn = e.target.parentElement.querySelector('[data-act="start"]');
+  if (btn) btn.disabled = !S.nameInput.trim();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Enter' && e.target.dataset && e.target.dataset.input === 'nameInput') act('start'); });
+document.addEventListener('click', e => { const el = e.target.closest('[data-act]'); if (el) act(el.dataset.act, el.dataset); });
+
+async function act(a, ds = {}){
+  const d = derived();
+  switch (a){
+    case 'start': { const n = S.nameInput.trim(); if (!n) return; save({ name:n, screen:'main' }); upsertParticipant({}); break; }
+    case 'goHome': save({ tab:'home', view:'root' }); break;
+    case 'goQuiz': save({ tab:'quiz' }); break;
+    case 'goTopics': if (d.topicsUnlocked) save({ tab:'home', view:'topics' }); break;
+    case 'goSummary': if (d.summaryUnlocked) save({ tab:'home', view:'summary' }); break;
+    case 'goToolkit': save({ tab:'home', view: d.summaryUnlocked ? 'summary' : (d.topicsUnlocked ? 'topics' : 'root') }); break;
+    case 'sitYes': save({ situation:'yes', topicsConfirmed:false, view:'topics', tab:'home' }); break;
+    case 'sitNo': save({ situation:'no', topics:[], topicsConfirmed:true, view:'summary', tab:'home' }); upsertParticipant({ situation:'no', topics:[] }); break;
+    case 'toggle': { const id = ds.id; const t = S.topics.includes(id) ? S.topics.filter(x => x !== id) : S.topics.concat(id); save({ topics:t, topicsConfirmed:false }); break; }
+    case 'confirmTopics': if (S.topics.length){ save({ topicsConfirmed:true, view:'summary' }); upsertParticipant({ situation:'yes', topics:S.topics }); } break;
+    case 'download': downloadPdf(); break;
+    case 'startQuiz': save({ quizStage:'question', qIndex:0, correct:0, selected:null, order: QUIZ.map(q => shuffle(q.o.map((_, i) => i))) }); break;
+    case 'pick': { if (S.selected != null) return; const i = Number(ds.i); save({ selected:i, correct: S.correct + (i === QUIZ[S.qIndex].c ? 1 : 0) }); break; }
+    case 'next':
+      if (S.qIndex + 1 < QUIZ.length) save({ qIndex:S.qIndex+1, selected:null });
+      else { save({ quizStage:'result', quizDone:true, score:S.correct, selected:null }); await upsertParticipant({ score:S.correct, quiz_done:true }); loadLeaderboard(); }
+      break;
+    case 'resultCta': save({ tab:'home', view: d.summaryUnlocked ? 'summary' : 'topics' }); break;
+    case 'refresh': loadLeaderboard(); toast('Refreshed'); break;
+    case 'reset': {
+      const pin = prompt('This clears every score. Enter the host PIN to confirm:'); if (pin == null) return;
+      const { error } = await db.rpc('reset_session', { p_pin: pin });
+      if (error) toast('Wrong PIN - nothing was deleted'); else { toast('Session reset'); loadLeaderboard(); }
+      break;
+    }
+  }
+}
+
+function downloadPdf(){
+  const J = window.jspdf && window.jspdf.jsPDF;
+  if (!J){ window.print(); return; }
+  const doc = new J({ unit:'pt', format:'a4' });
+  const Wp = 595, M = 48, maxW = Wp - 2*M; let y = M;
+  const hex = h => [parseInt(h.slice(1,3),16), parseInt(h.slice(3,5),16), parseInt(h.slice(5,7),16)];
+  const ink = hex('#12173A'), muted = hex('#8B8F9B'), orange = hex('#F26900');
+  const need = h => { if (y + h > 842 - M){ doc.addPage(); y = M; } };
+  const text = (s, size, color, bold, indent=0) => {
+    doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(size); doc.setTextColor(...color);
+    const lines = doc.splitTextToSize(s, maxW - indent); need(lines.length * size * 1.35);
+    doc.text(lines, M + indent, y); y += lines.length * size * 1.35;
+  };
+  const link = (label, url, indent) => {
+    doc.setFont('helvetica','normal'); doc.setFontSize(10); doc.setTextColor(...ink);
+    const lines = doc.splitTextToSize(label, maxW - indent - 8); need(lines.length * 13.5 + 12);
+    doc.text(lines, M + indent, y); doc.link(M + indent, y - 9, maxW - indent, lines.length * 13.5, { url });
+    y += lines.length * 13.5; doc.setFontSize(8); doc.setTextColor(...muted); doc.textWithLink(url, M + indent, y, { url }); y += 14;
+  };
+  text('Offers as a way of growing', 9, orange, true); y += 2;
+  text(S.name + "'s Offer Toolkit", 20, ink, true); y += 4;
+  if (S.situation === 'yes'){
+    toolkitData().forEach(sec => {
+      y += 8; need(40); const c = hex(sec.op.color);
+      doc.setFillColor(...c); doc.rect(M, y - 12, maxW, 26, 'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(255,255,255); doc.text(sec.op.label, M + 10, y + 5); y += 26;
+      link(sec.op.label + ' - Offer page on ltplabs.com', sec.op.href, 0); y += 2;
+      sec.items.forEach(it => {
+        y += 4; text(it.name, 11, c, true); y += 2;
+        link(it.name + ' - sub-offer page', it.page, 12);
+        it.links.forEach(r => link(r.t + ': ' + r.l, r.h, 12));
+      });
+    });
+  } else {
+    text('Unlock these conversations yourself', 13, ink, true); y += 4;
+    PLAYBOOK.forEach(p => text('- ' + p, 10, ink, false)); y += 8;
+    text('Your hooks - the three Offer pages', 11, ink, true); y += 4;
+    Object.values(OFFER_PAGES).forEach(op => link(op.label + ' - Offer page on ltplabs.com', op.href, 0));
+  }
+  y += 10; need(50); doc.setFillColor(...ink); doc.rect(M, y - 12, maxW, 44, 'F');
+  doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(255,255,255); doc.text('Pro tip', M + 10, y + 4);
+  doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.textWithLink('Visit our Demo Hub at ' + DEMO_HUB + ' for a proper showcase of what each Offer is building.', M + 10, y + 20, { url: DEMO_HUB });
+  doc.save((S.name || 'my').replace(/[^a-z0-9]+/gi,'-') + '-offer-toolkit.pdf');
+  toast('PDF downloaded');
+}
+
+/* ======================= BOOT ======================= */
+render();
+loadLeaderboard();
+subscribe();
+</script>
+</body>
+</html>
